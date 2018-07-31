@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Token ENZO super</title>
+    <script src="js/jquery-3.3.1.min.js"></script>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.1.0/css/bootstrap.min.css">
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.1.0/js/bootstrap.min.js"></script>
+
+    <style>
+        ul {
+            list-style-type: none;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            background: url(images/image_1.jpg);
+            -moz-background-size: 100%; /* Firefox 3.6+ */
+            -webkit-background-size: 100%; /* Safari 3.1+ и Chrome 4.0+ */
+            -o-background-size: 100%; /* Opera 9.6+ */
+            background-size: 100%;
+        }
+        .footer {
+            flex: 0 0 auto;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <br><br>
+    <div class="card">
+        <div class="card-body">
+            <h3 class="text-xs-center">
+                First Time Token
+            </h3>
+            <div class="row">
+                <div class="col-md-12 col-sm-12 col-lg-12">
+                    <div class="card-body">
+                        YOUR ETH WALLET ADDRESS:
+                        <strong id="walletAddress"></strong>
+                        <p></p>
+                        YOUR TOKEN:
+                        <strong id="walletTokens"></strong>
+                        <p></p>
+                    </div>
+                </div>
+                <p></p>
+            </div>
+
+            <div class="row">
+                <div class="col-md-12 col-sm-12 col-lg-12">
+                    <div class="card" style="width: 18rem;">
+                        <div class="card-body">
+                            <p class="card-text">
+
+                            <input id="amountEth" class="form-control-sm" name="amountEth" value="" type="text" placeholder="Input ETH">
+                            <span> &nbsp;&nbsp; </span>
+                            <p></p>
+                            <button class="btn btn-primary btn-sm" id="byTokens" onclick="buyMyTokens();">Buy FTT</button>
+                            <p></p>
+                            <p align="left" style="font-size: 10pt;">Amount of FTT you will receive: <strong id="receiveTokens">0</strong> </p>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+<p></p>
+
+        </div>
+    </div>
+</div>
+<footer >
+    <div class="navbar-fixed-bottom row-fluid">
+        <div class="navbar-inner">
+            <div class="container">
+                <div class="footer-copyright py-3 text-center">
+                    © 2018 Copyright
+                </div>
+            </div>
+        </div>
+    </div>
+</footer>
+<input id="abiContract" name="abiContract" value="" type="hidden">
+
+<script src="metaScript.js" type="text/javascript" charset="utf-8"></script>
+
+</body>
+</html>

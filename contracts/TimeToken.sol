@@ -242,11 +242,11 @@ contract TimeToken is StandardToken {
     string public constant symbol = "FTT";
     uint8 public constant decimals = 18;
     uint256 public rate = 1;
-    uint256 public constant INITIAL_SUPPLY = 10**10 * (10**uint256(decimals));
+    uint256 public constant INITIAL_SUPPLY = 10**2 * (10**uint256(decimals));
     address public owner;
     mapping (address => bool) public contractUsers;
     bool public mintingFinished;
-    uint256 tokenAllocated = 0;
+    uint256 public tokenAllocated = 0;
     // list of valid claim
     mapping (address => uint) public countClaimsToken;
 
@@ -260,7 +260,7 @@ contract TimeToken is StandardToken {
     constructor(address _owner) public {
         totalSupply = INITIAL_SUPPLY;
         owner = _owner;
-        //owner = msg.sender; // for testing
+        owner = msg.sender; // for test's
         balances[owner] = INITIAL_SUPPLY;
         transfersEnabled = true;
         mintingFinished = false;
@@ -346,7 +346,9 @@ contract TimeToken is StandardToken {
     }
 
     function claim() canMint public returns (bool) {
-        require(validPurchaseTime());
+        uint256 currentTime = now;
+        currentTime = 1540037100; //for test's
+        require(validPurchaseTime(currentTime));
         address beneficiar = msg.sender;
         require(beneficiar != address(0));
         require(!mintingFinished);
@@ -362,7 +364,8 @@ contract TimeToken is StandardToken {
         return true;
     }
 
-    function calcAmount(address _beneficiar) canMint public returns (uint256 amount) {
+    function calcAmount(address _beneficiar) canMint public returns (uint256 amount) { //for test's
+    //function calcAmount(address _beneficiar) canMint internal returns (uint256 amount) {
         uint256 numClaimToken = 1 * (10**uint256(decimals));
         if (countClaimsToken[_beneficiar] == 0) {
             countClaimsToken[_beneficiar] = 1;
@@ -375,8 +378,7 @@ contract TimeToken is StandardToken {
         countClaimsToken[_beneficiar] = countClaimsToken[_beneficiar].add(1);
     }
 
-    function validPurchaseTime(uint256 _currentTime) canMint public view returns (uint256) {
-        _currentTime = now;
+    function validPurchaseTime(uint256 _currentTime) canMint public view returns (bool) {
         uint256 dayTime = _currentTime % 1 days;
         if (3600*12 <= dayTime && dayTime <=  3600*12 + 15*60) {
             return true;

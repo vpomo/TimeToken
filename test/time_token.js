@@ -1,10 +1,9 @@
 var TimeToken = artifacts.require("./TimeToken.sol");
 
 var contractTimeToken;
-var contractB;
 //var owner = "0x8180826dc88a61176496210d3ce70cfe02f7ec74";
 var maxTotalSupply = 1e27;
-var OneToken = 121;
+var OneToken = 1e18;
 
 contract('TimeToken', (accounts) => {
     var owner = accounts[0];
@@ -19,28 +18,71 @@ contract('TimeToken', (accounts) => {
         assert.notEqual(undefined, contractTimeToken.address);
     });
 
-
-    it('verification balance contracts', async ()  => {
-        var dayTime = await contractTimeToken.validPurchaseTime();
-        console.log("dayTime = " + dayTime);
-/*
-        var totalSupplyA = await contractTimeToken.totalSupply.call();
-        //console.log(JSON.stringify(totalSupplyTest));
-        assert.equal( 1e12, Number(totalSupplyA));
-
-        var balanceOwnerA = await contractTimeToken.balanceOf(owner);
-        //console.log("balanceOwnerA = " + balanceOwnerA);
-        assert.equal(Number(totalSupplyA), balanceOwnerA);
-
-        var totalSupplyB = await contractTimeToken.totalSupply.call();
-        assert.equal( 0, Number(totalSupplyB));
-
-        var balanceOwnerB = await contractTimeToken.balanceOf(owner);
-        assert.equal(Number(totalSupplyB), balanceOwnerB);
-*/
-
+    it('verification define time of day', async ()  => {
+        var currentTime = 1540033200; //Sat, 20 Oct 2018 11:00:00 GMT
+        var isTimeSelling = await contractTimeToken.validPurchaseTime(currentTime);
+        assert.equal(false, isTimeSelling);
+        currentTime = 1540037100; //Sat, 20 Oct 2018 12:05:00 GMT
+        isTimeSelling = await contractTimeToken.validPurchaseTime(currentTime);
+        assert.equal(true, isTimeSelling);
+        currentTime = 1540038000; //Sat, 20 Oct 2018 12:20:00 GMT
+        isTimeSelling = await contractTimeToken.validPurchaseTime(currentTime);
+        assert.equal(false, isTimeSelling);
     });
 
+    it('verification balance contracts', async ()  => {
+        var totalSupply = await contractTimeToken.totalSupply.call();
+        //console.log(JSON.stringify(totalSupply));
+        assert.equal( 1e20, Number(totalSupply));
+
+        var balanceOwner = await contractTimeToken.balanceOf(owner);
+        //console.log("balanceOwner = " + balanceOwner);
+        assert.equal(Number(totalSupply), balanceOwner);
+    });
+
+    it('verification buy tokens', async ()  => {
+        var tokenAllocated = await contractTimeToken.tokenAllocated.call();
+        assert.equal( 0, Number(tokenAllocated));
+
+        var balanceFor = await contractTimeToken.balanceOf(accounts[4]);
+        assert.equal(0, balanceFor);
+
+        await contractTimeToken.buyTokens(accounts[4], {from:accounts[4], value: OneToken});
+        tokenAllocated = await contractTimeToken.tokenAllocated.call();
+        assert.equal(OneToken, Number(tokenAllocated));
+
+        balanceFor = await contractTimeToken.balanceOf(accounts[4]);
+        assert.equal(OneToken, balanceFor);
+    });
+
+    it('verification claim tokens with function calcAmount()', async ()  => {
+        var amountToken = await contractTimeToken.calcAmount.call(accounts[1]);
+        assert.equal(OneToken, amountToken);
+        amountToken = await contractTimeToken.calcAmount(accounts[1]);
+        amountToken = await contractTimeToken.calcAmount.call(accounts[1]);
+        assert.equal(OneToken*0.95, amountToken);
+        amountToken = await contractTimeToken.calcAmount(accounts[1]);
+        for(var j = 3; j < 20; j++){
+            amountToken = await contractTimeToken.calcAmount(accounts[1]);
+        }
+        amountToken = await contractTimeToken.calcAmount.call(accounts[1]);
+        assert.equal(OneToken*0.05, amountToken);
+        amountToken = await contractTimeToken.calcAmount(accounts[1]);
+        amountToken = await contractTimeToken.calcAmount.call(accounts[1]);
+        assert.equal(0, amountToken);
+    });
+
+    it('verification claim tokens', async ()  => {
+        var amountToken = await contractTimeToken.balanceOf(accounts[2]);
+        assert.equal(0, amountToken);
+        await contractTimeToken.claim({from:accounts[2]});
+        amountToken = await contractTimeToken.balanceOf(accounts[2]);
+        assert.equal(OneToken, amountToken);
+
+        await contractTimeToken.claim({from:accounts[2]});
+        amountToken = await contractTimeToken.balanceOf(accounts[2]);
+        assert.equal(OneToken + OneToken*0.95, amountToken);
+    });
 });
 
 
