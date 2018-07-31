@@ -1,5 +1,4 @@
 var TimeToken = artifacts.require("./TimeToken.sol");
-var TokenB = artifacts.require("./TokenB.sol");
 
 var contractTimeToken;
 var contractB;
@@ -20,7 +19,11 @@ contract('TimeToken', (accounts) => {
         assert.notEqual(undefined, contractTimeToken.address);
     });
 
+
     it('verification balance contracts', async ()  => {
+        var dayTime = await contractTimeToken.validPurchaseTime();
+        console.log("dayTime = " + dayTime);
+/*
         var totalSupplyA = await contractTimeToken.totalSupply.call();
         //console.log(JSON.stringify(totalSupplyTest));
         assert.equal( 1e12, Number(totalSupplyA));
@@ -34,6 +37,7 @@ contract('TimeToken', (accounts) => {
 
         var balanceOwnerB = await contractTimeToken.balanceOf(owner);
         assert.equal(Number(totalSupplyB), balanceOwnerB);
+*/
 
     });
 

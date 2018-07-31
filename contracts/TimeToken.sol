@@ -236,24 +236,24 @@ contract StandardToken is ERC20, ERC223Token {
 
 }
 
-interface ITokenB {
-    function mint(address _to, uint256 _amount) external returns (bool);
-}
-
 contract TimeToken is StandardToken {
 
     string public constant name = "First Time Token";
     string public constant symbol = "FTT";
-    uint8 public constant decimals = 2;
+    uint8 public constant decimals = 18;
+    uint256 public rate = 1;
     uint256 public constant INITIAL_SUPPLY = 10**10 * (10**uint256(decimals));
     address public owner;
     mapping (address => bool) public contractUsers;
     bool public mintingFinished;
-    ITokenB public contractTokenB;
-
+    uint256 tokenAllocated = 0;
+    // list of valid claim
+    mapping (address => uint) public countClaimsToken;
 
     event OwnerChanged(address indexed previousOwner, address indexed newOwner);
-    event TokenBurned(address indexed owner, uint256 amountTokens);
+    event TokenPurchase(address indexed beneficiary, uint256 value, uint256 amount);
+    event TokenLimitReached(uint256 tokenRaised, uint256 purchasedToken);
+    event MinWeiLimitReached(address indexed sender, uint256 weiAmount);
     event Mint(address indexed to, uint256 amount);
     event MintFinished();
 
@@ -268,16 +268,37 @@ contract TimeToken is StandardToken {
 
     // fallback function can be used to buy tokens
     function() payable public {
-        revert();
+        buyTokens(msg.sender);
+    }
+
+    function buyTokens(address _investor) public payable returns (uint256){
+        require(_investor != address(0));
+        uint256 weiAmount = msg.value;
+        uint256 tokens = validPurchaseTokens(weiAmount);
+        if (tokens == 0) {revert();}
+        tokenAllocated = tokenAllocated.add(tokens);
+        mint(_investor, tokens, owner);
+
+        emit TokenPurchase(_investor, weiAmount, tokens);
+        owner.transfer(weiAmount);
+        return tokens;
+    }
+
+    function validPurchaseTokens(uint256 _weiAmount) public returns (uint256) {
+        uint256 addTokens = _weiAmount.mul(rate);
+        if (_weiAmount < 0.005 ether) {
+            emit MinWeiLimitReached(msg.sender, _weiAmount);
+            return 0;
+        }
+        if (tokenAllocated.add(addTokens) > balances[owner]) {
+            emit TokenLimitReached(tokenAllocated, addTokens);
+            return 0;
+        }
+        return addTokens;
     }
 
     modifier onlyOwner() {
         require(msg.sender == owner);
-        _;
-    }
-
-    modifier onlyOwnerOrUser() {
-        require(msg.sender == owner || contractUsers[msg.sender]);
         _;
     }
 
@@ -303,34 +324,8 @@ contract TimeToken is StandardToken {
         return true;
     }
 
-    /**
-    * @dev Add an contract admin
-    */
-    function setContractUser(address _user, bool _isUser) public onlyOwner {
-        contractUsers[_user] = _isUser;
-    }
-
     function enableTransfers(bool _transfersEnabled) onlyOwner public {
         transfersEnabled = _transfersEnabled;
-    }
-
-    function initContractTokenB (address _addressContract) public onlyOwner {
-        require(_addressContract != address(0));
-        contractTokenB = ITokenB(_addressContract);
-    }
-
-    function burn(uint256 _amount) public returns (bool){
-        require(0 < _amount);
-        address _owner = msg.sender;
-        require(_amount <= balances[_owner]);
-        require(_amount <= totalSupply);
-
-        balances[_owner] = balances[_owner].sub(_amount);
-        totalSupply = totalSupply.sub(_amount);
-        contractTokenB.mint(_owner, _amount);
-
-        emit TokenBurned(msg.sender, _amount);
-        return true;
     }
 
     /**
@@ -339,28 +334,74 @@ contract TimeToken is StandardToken {
      * @param _amount The amount of tokens to mint.
      * @return A boolean that indicates if the operation was successful.
      */
-    function mint(address _to, uint256 _amount) canMint onlyOwnerOrUser external returns (bool) {
+    function mint(address _to, uint256 _amount, address _owner) canMint internal returns (bool) {
         require(_to != address(0));
-        require(_amount > 0);
-        require(totalSupply.add(_amount) <= 10**10 * (10**uint256(decimals)));
+        require(_amount <= balances[owner]);
+        require(!mintingFinished);
         balances[_to] = balances[_to].add(_amount);
-        totalSupply = totalSupply.add(_amount);
+        balances[_owner] = balances[_owner].sub(_amount);
         emit Mint(_to, _amount);
+        emit Transfer(_owner, _to, _amount);
         return true;
+    }
+
+    function claim() canMint public returns (bool) {
+        require(validPurchaseTime());
+        address beneficiar = msg.sender;
+        require(beneficiar != address(0));
+        require(!mintingFinished);
+
+        uint256 amount = calcAmount(beneficiar);
+        require(amount <= balances[owner]);
+
+        balances[beneficiar] = balances[beneficiar].add(amount);
+        balances[owner] = balances[owner].sub(amount);
+        tokenAllocated = tokenAllocated.add(amount);
+        emit Mint(beneficiar, amount);
+        emit Transfer(owner, beneficiar, amount);
+        return true;
+    }
+
+    function calcAmount(address _beneficiar) canMint public returns (uint256 amount) {
+        uint256 numClaimToken = 1 * (10**uint256(decimals));
+        if (countClaimsToken[_beneficiar] == 0) {
+            countClaimsToken[_beneficiar] = 1;
+        }
+        if (countClaimsToken[_beneficiar] >= 22) {
+            return 0;
+        }
+        uint step = countClaimsToken[_beneficiar];
+        amount = numClaimToken.mul(105 - 5*step).div(100);
+        countClaimsToken[_beneficiar] = countClaimsToken[_beneficiar].add(1);
+    }
+
+    function validPurchaseTime(uint256 _currentTime) canMint public view returns (uint256) {
+        _currentTime = now;
+        uint256 dayTime = _currentTime % 1 days;
+        if (3600*12 <= dayTime && dayTime <=  3600*12 + 15*60) {
+            return true;
+        }
+        return false;
     }
 
     /**
      * Peterson's Law Protection
      * Claim tokens
      */
-    function claimTokens(address _token) public onlyOwner {
+    function claimTokensToOwner(address _token) public onlyOwner {
         if (_token == 0x0) {
             owner.transfer(address(this).balance);
             return;
         }
-        TokenA token = TokenA(_token);
+        TimeToken token = TimeToken(_token);
         uint256 balance = token.balanceOf(this);
         token.transfer(owner, balance);
         emit Transfer(_token, owner, balance);
+    }
+
+    function setRate(uint256 _newRate) external onlyOwner returns (bool){
+        require(_newRate > 0);
+        rate = _newRate;
+        return true;
     }
 }
