@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>Token ENZO super</title>
+    <title>Token FTT super</title>
     <script src="js/jquery-3.3.1.min.js"></script>
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.1.0/css/bootstrap.min.css">
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.1.0/js/bootstrap.min.js"></script>
@@ -48,21 +48,37 @@
             </div>
 
             <div class="row">
-                <div class="col-md-12 col-sm-12 col-lg-12">
+                <div class="col-md-6 col-sm-6 col-lg-6">
                     <div class="card" style="width: 18rem;">
                         <div class="card-body">
+                            <p>Here you can buy tokens</p>
                             <p class="card-text">
 
                             <input id="amountEth" class="form-control-sm" name="amountEth" value="" type="text" placeholder="Input ETH">
+                                <p>Please enter the amount of ETH</p>
                             <span> &nbsp;&nbsp; </span>
                             <p></p>
                             <button class="btn btn-primary btn-sm" id="byTokens" onclick="buyMyTokens();">Buy FTT</button>
                             <p></p>
-                            <p align="left" style="font-size: 10pt;">Amount of FTT you will receive: <strong id="receiveTokens">0</strong> </p>
 
                         </div>
                     </div>
                 </div>
+
+                <div class="col-md-6 col-sm-6 col-lg-6">
+                    <div class="card" style="width: 18rem;">
+                        <div class="card-body">
+                            <p>Here you can claim tokens</p>
+                            <p class="card-text">
+
+                                <span> &nbsp;&nbsp; </span>
+                            <p></p>
+                            <button class="btn btn-primary btn-sm" id="claimTokens" onclick="claimTokens();">Claim token</button>
+                            <p></p>
+                        </div>
+                    </div>
+                </div>
+
             </div>
 <p></p>
 

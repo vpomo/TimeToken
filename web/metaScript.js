@@ -47,12 +47,16 @@ function claimTokens() {
 function buyMyTokens() {
     console.log("buy tokens ...");
     var myWalletAddress = web3.eth.accounts[0];
-    var receiveTokens;
+    var receiveTokens = Number($('#amountEth').val()) * decimalToken;
+    console.log("receiveTokens = " + receiveTokens);
 
-    contract.buyTokens(myWalletAddress, function (error, data) {
-        receiveTokens = data;
-        console.log("receiveTokens = " + data);
-        $('#receiveTokens').html(Number(receiveTokens/decimalToken));
+    contract.buyTokens(web3.eth.accounts[0], {from: web3.eth.accounts[0], value: receiveTokens}, function (error, data) {
+    });
+}
+
+function claimTokens() {
+    console.log("claim tokens ...");
+    contract.claim(function (error, data) {
     });
 }
 
