@@ -265,7 +265,7 @@ contract TimeToken is StandardToken {
     constructor(address _owner) public {
         totalSupply = INITIAL_SUPPLY;
         owner = _owner;
-        owner = msg.sender; // for test's
+        //owner = msg.sender; // for test's
         balances[owner] = INITIAL_SUPPLY;
         transfersEnabled = true;
         mintingFinished = false;
@@ -352,7 +352,7 @@ contract TimeToken is StandardToken {
 
     function claim() canMint public payable returns (bool) {
         uint256 currentTime = now;
-        currentTime = 1540037100; //for test's
+        //currentTime = 1540037100; //for test's
         require(validPurchaseTime(currentTime));
         require(msg.value >= priceClaim);
         address beneficiar = msg.sender;
@@ -371,8 +371,8 @@ contract TimeToken is StandardToken {
         return true;
     }
 
-    function calcAmount(address _beneficiar) canMint public returns (uint256 amount) { //for test's
-    //function calcAmount(address _beneficiar) canMint internal returns (uint256 amount) {
+    //function calcAmount(address _beneficiar) canMint public returns (uint256 amount) { //for test's
+    function calcAmount(address _beneficiar) canMint internal returns (uint256 amount) {
         if (countClaimsToken[_beneficiar] == 0) {
             countClaimsToken[_beneficiar] = 1;
         }
