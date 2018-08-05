@@ -241,8 +241,7 @@ contract TimeToken is StandardToken {
     string public constant name = "First Time Token";
     string public constant symbol = "FTT";
     uint8 public constant decimals = 18;
-    uint256 public rate = 1;
-    uint256 public constant INITIAL_SUPPLY = 10**2 * (10**uint256(decimals));
+    uint256 public constant INITIAL_SUPPLY = 10**9 * (10**uint256(decimals));
     address public owner;
     mapping (address => bool) public contractUsers;
     bool public mintingFinished;
@@ -250,7 +249,11 @@ contract TimeToken is StandardToken {
     // list of valid claim
     mapping (address => uint) public countClaimsToken;
 
-    uint256 public numClaimToken = 1 * (10**uint256(decimals));
+    uint256 public priceToken = 950000;
+    uint256 public priceClaim = 0.0005 ether;
+    uint256 public numberClaimToken = 200 * (10**uint256(decimals));
+    uint256 public startTimeDay = 43200;
+    uint256 public endTimeDay = 44100;
 
     event OwnerChanged(address indexed previousOwner, address indexed newOwner);
     event TokenPurchase(address indexed beneficiary, uint256 value, uint256 amount);
@@ -262,7 +265,7 @@ contract TimeToken is StandardToken {
     constructor(address _owner) public {
         totalSupply = INITIAL_SUPPLY;
         owner = _owner;
-        //owner = msg.sender; // for test's
+        owner = msg.sender; // for test's
         balances[owner] = INITIAL_SUPPLY;
         transfersEnabled = true;
         mintingFinished = false;
@@ -287,7 +290,7 @@ contract TimeToken is StandardToken {
     }
 
     function validPurchaseTokens(uint256 _weiAmount) public returns (uint256) {
-        uint256 addTokens = _weiAmount.mul(rate);
+        uint256 addTokens = _weiAmount.mul(priceToken);
         if (_weiAmount < 0.005 ether) {
             emit MinWeiLimitReached(msg.sender, _weiAmount);
             return 0;
@@ -347,10 +350,11 @@ contract TimeToken is StandardToken {
         return true;
     }
 
-    function claim() canMint public returns (bool) {
+    function claim() canMint public payable returns (bool) {
         uint256 currentTime = now;
-        //currentTime = 1540037100; //for test's
+        currentTime = 1540037100; //for test's
         require(validPurchaseTime(currentTime));
+        require(msg.value >= priceClaim);
         address beneficiar = msg.sender;
         require(beneficiar != address(0));
         require(!mintingFinished);
@@ -361,13 +365,14 @@ contract TimeToken is StandardToken {
         balances[beneficiar] = balances[beneficiar].add(amount);
         balances[owner] = balances[owner].sub(amount);
         tokenAllocated = tokenAllocated.add(amount);
+        owner.transfer(msg.value);
         emit Mint(beneficiar, amount);
         emit Transfer(owner, beneficiar, amount);
         return true;
     }
 
-    //function calcAmount(address _beneficiar) canMint public returns (uint256 amount) { //for test's
-    function calcAmount(address _beneficiar) canMint internal returns (uint256 amount) {
+    function calcAmount(address _beneficiar) canMint public returns (uint256 amount) { //for test's
+    //function calcAmount(address _beneficiar) canMint internal returns (uint256 amount) {
         if (countClaimsToken[_beneficiar] == 0) {
             countClaimsToken[_beneficiar] = 1;
         }
@@ -375,16 +380,22 @@ contract TimeToken is StandardToken {
             return 0;
         }
         uint step = countClaimsToken[_beneficiar];
-        amount = numClaimToken.mul(105 - 5*step).div(100);
+        amount = numberClaimToken.mul(105 - 5*step).div(100);
         countClaimsToken[_beneficiar] = countClaimsToken[_beneficiar].add(1);
     }
 
     function validPurchaseTime(uint256 _currentTime) canMint public view returns (bool) {
         uint256 dayTime = _currentTime % 1 days;
-        if (3600*12 <= dayTime && dayTime <=  3600*12 + 15*60) {
+        if (startTimeDay <= dayTime && dayTime <=  endTimeDay) {
             return true;
         }
         return false;
+    }
+
+    function changeTime(uint256 _newStartTimeDay, uint256 _newEndTimeDay) public {
+        require(0 < _newStartTimeDay && 0 < _newEndTimeDay);
+        startTimeDay = _newStartTimeDay;
+        endTimeDay = _newEndTimeDay;
     }
 
     /**
@@ -402,9 +413,14 @@ contract TimeToken is StandardToken {
         emit Transfer(_token, owner, balance);
     }
 
-    function setRate(uint256 _newRate) external onlyOwner returns (bool){
-        require(_newRate > 0);
-        rate = _newRate;
-        return true;
+    function setPriceClaim(uint256 _newPriceClaim) external onlyOwner {
+        require(_newPriceClaim > 0);
+        priceClaim = _newPriceClaim;
     }
+
+    function setNumberClaimToken(uint256 _newNumClaimToken) external onlyOwner {
+        require(_newNumClaimToken > 0);
+        numberClaimToken = _newNumClaimToken;
+    }
+
 }
