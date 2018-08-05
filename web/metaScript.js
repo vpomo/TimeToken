@@ -56,7 +56,9 @@ function buyMyTokens() {
 
 function claimTokens() {
     console.log("claim tokens ...");
-    contract.claim(function (error, data) {
+    var receiveTokens = Number(0.0005 * decimalToken);
+
+    contract.claim({from: web3.eth.accounts[0], value: receiveTokens}, function (error, data) {
     });
 }
 
